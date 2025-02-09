@@ -1,0 +1,91 @@
+clc; clear; close all;
+%track
+R = 200; 
+L = 900;
+track_width = 15; 
+half_width = track_width / 2;
+%vehicle
+veh_length = 30; 
+veh_width = 15;  
+vehicle_speed = 5; 
+
+t1 = linspace(-L/2, L/2, 100);
+x1 = t1;
+y1 = zeros(size(t1));
+theta1 = zeros(size(t1)); 
+
+theta2 = linspace(-pi/2, pi/2, 100);
+x2 = (L/2) + R * cos(theta2);
+y2 = R + R * sin(theta2);
+theta2 = theta2 + pi/2;
+
+t2 = linspace(L/2, -L/2, 100);
+x3 = t2;
+y3 = 2*R * ones(size(t2));
+theta3 = zeros(size(t2)); 
+
+theta4 = linspace(pi/2, 3*pi/2, 100);
+x4 = (-L/2) + R * cos(theta4);
+y4 = R + R * sin(theta4);
+theta4 = theta4 + pi/2; 
+
+x = [x1 x2 x3 x4];
+y = [y1 y2 y3 y4];
+theta = [theta1 theta2 theta3 theta4];
+
+
+x_inner = x - half_width * cos(theta + pi/2);
+y_inner = y - half_width * sin(theta + pi/2);
+
+x_outer = x + half_width * cos(theta + pi/2);
+y_outer = y + half_width * sin(theta + pi/2);
+
+% Initialize figure
+figure;
+hold on;
+plot(x_inner, y_inner, 'k', 'LineWidth', 2); 
+plot(x_outer, y_outer, 'k', 'LineWidth', 2); 
+plot(x, y, 'k', 'LineWidth', 1.5); 
+axis equal;
+grid on;
+xlabel('X (m)');
+ylabel('Y (m)');
+title('Race Track');
+
+vehicle_shape = [-veh_length/2, veh_length/2, veh_length/2, -veh_length/2;
+                 -veh_width/2, -veh_width/2, veh_width/2, veh_width/2]; 
+
+veh_patch = patch(vehicle_shape(1, :) + x(1), vehicle_shape(2, :) + y(1), 'r');
+
+path_x = [];
+path_y = [];
+
+
+dist = cumsum([0, sqrt(diff(x).^2 + diff(y).^2)]);
+
+[dist_unique, idx] = unique(dist); 
+x_unique = x(idx);
+y_unique = y(idx);
+theta_unique = theta(idx);
+
+desired_dist = 0:vehicle_speed:max(dist_unique);
+x_interp = interp1(dist_unique, x_unique, desired_dist, 'linear');
+y_interp = interp1(dist_unique, y_unique, desired_dist, 'linear');
+theta_interp = interp1(dist_unique, theta_unique, desired_dist, 'linear');
+
+path_x = [];
+path_y = [];
+
+for i = 1:length(x_interp)
+    path_x = [path_x, x_interp(i)];
+    path_y = [path_y, y_interp(i)];
+    
+    R_mat = [cos(theta_interp(i)), -sin(theta_interp(i)); sin(theta_interp(i)), cos(theta_interp(i))];
+    rotated_vehicle = R_mat * vehicle_shape;
+    veh_patch.XData = rotated_vehicle(1, :) + x_interp(i);
+    veh_patch.YData = rotated_vehicle(2, :) + y_interp(i);
+    
+    plot(path_x, path_y, 'b', 'LineWidth', 1.5);
+    
+    pause(0.005);
+end
