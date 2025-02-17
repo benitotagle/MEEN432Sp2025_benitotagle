@@ -7,3 +7,9 @@ TA Notes:
 2. Add simulink (was not necessary for week1 but going forwards is necessary)
 3. Add comments to code (especially if you are using built in functions).
 4. Generate track (center portion) seperate from vehicle path.
+
+TA Notes Week2:
+1. Organize ReadME (Reasoning, Script Instructions, etc)
+2. Implement "obj.m" parameters into Driver Controller.
+3. Simulation appears to have framerate issues look into "drawnow limitrate".
+4. Random rotation during simulation.
