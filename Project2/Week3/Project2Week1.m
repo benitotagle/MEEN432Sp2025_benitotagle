@@ -46,8 +46,8 @@ vlr   = vwbase - vlf;  % distance from CoG to rear axle
 
 % Tire cornering stiffness
 ca_f  = 60000;  % N/rad (front cornering stiffness)
-ca_r  = 80000;  % N/rad (rear cornering stiffness)
-miu   = 100.0;    % friction coefficient
+ca_r  = 90000;  % N/rad (rear cornering stiffness)
+miu   = 1.0;    % friction coefficient
 
 % Normal forces (static load distribution)
 nfzf = (vmass * g * vlr) / vwbase; % front axle normal force
@@ -71,7 +71,7 @@ ylabel('Y (m)');
 title('Project 2 Race Track');
 %}
 
-num_waypoints = 120;  % Number of waypoints along the track
+num_waypoints = 240;  % Number of waypoints along the track
 
 % Generate interpolated waypoints
 s_track = linspace(1, length(x_track), num_waypoints);
