@@ -170,6 +170,64 @@ title('Vehicle Path Colored by Velocity');
 cb = colorbar;
 cb.Label.String = 'Velocity (m/s)';
 grid on;
+function raceStats = getRaceStats(car_X, car_Y, car_time, xpath, ypath, xinpath, yinpath, xoutpath, youtpath)
+    % Estimate number of laps
+    loops = 0;
+    crossed = false;
+    for i = 2:length(car_X)
+        % Look for forward crossing near start line (X ≈ 0, Y ≈ 0)
+        if car_X(i-1) < 0 && car_X(i) >= 0 && abs(car_Y(i)) < 10
+            if ~crossed
+                loops = loops + 1;
+                crossed = true;
+            end
+        else
+            crossed = false;
+        end
+    end
+
+    % Track inside/outside logic
+    inside = 0;
+    offtrack_count = 0;
+    was_outside = false;
+
+    for i = 1:length(car_X)
+        % Find closest point on centerline
+        d = (car_X(i) - xpath).^2 + (car_Y(i) - ypath).^2;
+        [~, idx] = min(d);
+
+        % Compute width of track at this index
+        inner_dist = norm([xinpath(idx), yinpath(idx)] - [xpath(idx), ypath(idx)]);
+        outer_dist = norm([xoutpath(idx), youtpath(idx)] - [xpath(idx), ypath(idx)]);
+        width_half = max(inner_dist, outer_dist);
+
+        % Distance from car to centerline
+        dist_to_center = norm([car_X(i), car_Y(i)] - [xpath(idx), ypath(idx)]);
+
+        if dist_to_center <= width_half
+            inside = inside + 1;
+            was_outside = false;
+        else
+            if ~was_outside
+                offtrack_count = offtrack_count + 1;
+                was_outside = true;
+            end
+        end
+    end
+
+    % Percentage of time inside track
+    percent_inside = (inside / length(car_X)) * 100;
+
+    % Output structure
+    raceStats.laps_completed = loops;
+    raceStats.percent_inside_track = percent_inside;
+    raceStats.times_off_track = offtrack_count;
+end
+raceStats = getRaceStats(car_X, car_Y, car_time, xpath, ypath, xinpath, yinpath, xoutpath, youtpath);
+fprintf("Laps Completed: %d\n", raceStats.laps_completed);
+fprintf("Time Inside Track: %.2f%%\n", raceStats.percent_inside_track);
+fprintf("Times Went Off Track: %d\n", raceStats.times_off_track);
+
 % ---------------- Animate Vehicle ----------------
 fh = figure();
 fh.WindowState = 'maximized';
@@ -207,3 +265,4 @@ for i = 1:length(car_X)
 
     drawnow limitrate
 end
+
