@@ -32,6 +32,13 @@ numParallel = 74;       % [-] - Parallel cells
 %% Environment %%
 rho = 1.225;
 
+% ---------------- Motor Torque Curve ----------------
+motor_rpm = [0, 1000, 2000, 3000, 4000, 5000, 6000, ...
+             7000, 8000, 9000, 10000, 11000, 12000];
+motor_torque = [280, 280, 275, 260, 250, 230, 200, 175, 140, 120,  100,   75,     0]*2.8;
+motor_torque_curve = [motor_rpm', motor_torque'];
+tau_motor_max = max(motor_torque);
+
 % Vehicle Tire Info
 calpha_front = 40000;                  % [N/rad] - Front cornering stiffness
 calpha_rear = 40000;                   % [N/rad] - Rear cornering stiffness
@@ -51,13 +58,6 @@ vy0 = 0;
 omega0 = 0;
 psi0 = 0;
 
-% ---------------- Motor Torque Curve ----------------
-motor_rpm = [0, 1000, 2000, 3000, 4000, 5000, 6000, ...
-             7000, 8000, 9000, 10000, 11000, 12000];
-motor_torque = [280, 280, 275, 260, 250, 230, 200, 175, 140, 120,  100,   75,     0];
-motor_torque_curve = [motor_rpm', motor_torque'];
-tau_motor_max = max(motor_torque);
-
 track_radius = 200;
 understeerCoeff = mass / ((lr + lf) * track_radius) * (lr / calpha_front - lf / calpha_rear);
 maxAlpha = 4 / 180 * pi;
@@ -66,17 +66,15 @@ max_motor_radps = max_motor_rpm * 2 * pi / 60;      % [rad/s]
 vxd = (max_motor_radps / gratio) * rw;              % [m/s] computed from max rpm and wheel radius
 vx_threshold1 = 0.1;
 
-
-
-
 %% Controller%%
-kp = 0.0075; %0.0075
-ki = 0.02; %0.02
-kd = 0.1; %0.005
-corner_factor=0.99;
+kp=50000000; %0.0075
+ki=100; %0.02
+kd=10000000; %0.005
+corner_factor=0.90;
 lookahead_dist = 50;
 lookahead_dist_long=100;
-T_lookahead=0.3;
+T_lookahead=0.3; %lookahead time
+
 
 % ---------------- Track Generation Parameters ----------------
 radius = 200; 
@@ -156,7 +154,7 @@ end
 disp(psi0)
 
 % ---------------- Run Simulation ----------------
-simout = sim("Project4_Simulink.slx");
+simout = sim("Project4_Simulink");
 car_X = simout.X.Data;
 car_Y = simout.Y.Data;
 car_psi = simout.psi.Data;
@@ -188,19 +186,24 @@ h = animatedline;
 
 L = 15;
 width = 5;
+
+% Initial car shape
+car = [-L/2 -width/2; -L/2 width/2; L/2 width/2; L/2 -width/2];
+rcar = rotate(car', car_psi(1))';
+shape = polyshape(rcar + [car_X(1), car_Y(1)]);
+ap = plot(shape, 'FaceColor', 'k');
+
 for i = 1:length(car_X)
     x = car_X(i);
     y = car_Y(i);
     psi = car_psi(i);
+    
     addpoints(h,x,y)
 
-    car = [-L/2 -width/2; -L/2 width/2; L/2 width/2; L/2 -width/2];
+    % Update car shape
     rcar = rotate(car', psi)';
-    a = polyshape(rcar + [x,y]);
-    ap = plot(a);
+    shape.Vertices = rcar + [x, y];
+    ap.Shape = shape;
+
     drawnow limitrate
-    ap.FaceColor = 'k';
-    drawnow limitrate 
-    pause(0.01);
-    delete(ap)
 end
