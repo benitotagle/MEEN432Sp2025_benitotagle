@@ -181,7 +181,7 @@ end
 disp(psi0)
 
 % ---------------- Run Simulation ----------------
-simout = sim("Project4_Simulink_final");
+simout = sim("Project4_Simulink_individual");
 car_X = simout.X.Data;
 car_Y = simout.Y.Data;
 car_psi = simout.psi.Data;
